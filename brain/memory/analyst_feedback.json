@@ -1,0 +1,597 @@
+[
+  {
+    "transaction_id": "GAN_R1_001",
+    "final_score": 29.779569892473113,
+    "decision": "APPROVED",
+    "risk_analyst_score": -5,
+    "pattern_detective_score": 98,
+    "decision_maker_reasoning": "5-Agent Consensus Analysis:\n\nBehaviorAnalyst: 0% risk\n  - none\nPatternDetector: 98% risk\n  - card_testing\nGeographicAnalyst: -100% risk\n  - location_impossibility\nRiskAssessor: -5% risk\n  - major amount spike\nTemporalAnalyst: 95% risk\n  - finding1\n\nStreaming Context:\n- Velocity: 0 txns in 0.0min\n- Streaming Bonus: +10 points\n",
+    "agent_discussion": [
+      {
+        "agent": "BehaviorAnalyst",
+        "timestamp": "2025-12-21T02:05:07.985829",
+        "analysis": {
+          "score": 0,
+          "confidence": 100,
+          "analysis": "The transaction details provided do not include any obvious patterns or known fraud characteristics, such as frequent purchases of the same item, repeated activities without clear pattern, large amount of transactions in a short time frame. It is likely that this transaction has low velocity and does not match known fraud patterns.",
+          "key_findings": [
+            "none"
+          ],
+          "velocity_indicators": {
+            "high_velocity": false,
+            "automated_behavior": true,
+            "rapid_fire_attack": false,
+            "bot_like_pattern": false
+          },
+          "agent_name": "BehaviorAnalyst"
+        }
+      },
+      {
+        "agent": "PatternDetector",
+        "timestamp": "2025-12-21T02:05:17.986613",
+        "analysis": {
+          "score": 98,
+          "confidence": 98,
+          "analysis": "The transaction has a high score of 98, indicating that it matches the pattern for card testing with small amounts and an increase in velocity.",
+          "key_findings": [
+            "card_testing",
+            "progressive_amounts"
+          ],
+          "pattern_indicators": {
+            "card_testing": true,
+            "progressive_amounts": true
+          },
+          "agent_name": "PatternDetector"
+        }
+      },
+      {
+        "agent": "GeographicAnalyst",
+        "timestamp": "2025-12-21T02:05:28.708554",
+        "analysis": {
+          "score": -100,
+          "confidence": 85,
+          "analysis": "The transaction details suggest that the customer may be visiting a location multiple times in very short timeframes, which can indicate a physical impossibility and potential illegal activities involving surveillance cameras and data collection devices. However, there are no known patterns or fraud indicators that directly apply to this particular case.",
+          "key_findings": [
+            "location_impossibility"
+          ],
+          "geographic_indicators": {
+            "location_impossibility": true
+          },
+          "agent_name": "GeographicAnalyst"
+        }
+      },
+      {
+        "agent": "RiskAssessor",
+        "timestamp": "2025-12-21T02:05:37.179732",
+        "analysis": {
+          "score": -5,
+          "confidence": 97,
+          "analysis": "<detailed financial risk analysis>",
+          "key_findings": [
+            "major amount spike",
+            "high merchant risk"
+          ],
+          "financial_indicators": {
+            "amount_spike": true,
+            "high_merchant_risk": true
+          },
+          "agent_name": "RiskAssessor"
+        }
+      },
+      {
+        "agent": "TemporalAnalyst",
+        "timestamp": "2025-12-21T02:05:47.827979",
+        "analysis": {
+          "score": 95,
+          "confidence": 85,
+          "analysis": "The transaction details suggest a non-automated script-like approach, with no evidence of regular intervals or automated bot-like patterns.",
+          "key_findings": [
+            "finding1",
+            "finding2",
+            "finding3"
+          ],
+          "temporal_indicators": {
+            "scripted_behavior": true,
+            "regular_intervals": false,
+            "unusual_hours": false,
+            "high_frequency": true
+          },
+          "agent_name": "TemporalAnalyst"
+        }
+      }
+    ],
+    "timestamp": "2025-12-21T02:05:47.846813",
+    "routing": {
+      "topic": "approved-transactions",
+      "reason": "LOW RISK \u2192 AUTO-APPROVE",
+      "action": "Transaction approved automatically",
+      "confidence": 93.0,
+      "timestamp": "2025-12-21T02:05:47.846813"
+    },
+    "stored_at": "2025-12-21T02:05:47.864191"
+  },
+  {
+    "transaction_id": "GAN_R1_002",
+    "final_score": 100,
+    "decision": "FRAUD DETECTED",
+    "risk_analyst_score": 98,
+    "pattern_detective_score": 82,
+    "decision_maker_reasoning": "5-Agent Consensus Analysis:\n\nBehaviorAnalyst: 85% risk\n  - finding1\nPatternDetector: 82% risk\n  - card_testing\nGeographicAnalyst: 85% risk\n  - physical impossibility\nRiskAssessor: 98% risk\n  - {'field': 'progressive_testing', 'value': False, 'finding': 'The transaction occurred in a non-continuous window of 0.0 minutes, indicating a progressive testing pattern.'}\nTemporalAnalyst: 85% risk\n  - finding1\n\nStreaming Context:\n- Velocity: 1 txns in 0.0min\n- Streaming Bonus: +25 points\n",
+    "agent_discussion": [
+      {
+        "agent": "BehaviorAnalyst",
+        "timestamp": "2025-12-21T02:06:00.324510",
+        "analysis": {
+          "score": 85,
+          "confidence": 90,
+          "analysis": "The transaction details provided indicate that the velocity of this transaction is unusually low, with only one transaction occurring every minute (0.0 minutes). This unusual transaction velocity suggests a possible automated script or behavior, as known fraud patterns often involve scripts for transactions to occur quickly and frequently.",
+          "key_findings": [
+            "finding1",
+            "finding2"
+          ],
+          "velocity_indicators": {
+            "high_velocity": true,
+            "automated_behavior": false,
+            "rapid_fire_attack": false,
+            "bot_like_pattern": false
+          },
+          "agent_name": "BehaviorAnalyst"
+        }
+      },
+      {
+        "agent": "PatternDetector",
+        "timestamp": "2025-12-21T02:06:14.379900",
+        "analysis": {
+          "score": 82,
+          "confidence": 97,
+          "analysis": "This transaction appears to have a known pattern of small amounts, increasing over time, and frequent transactions (Rapid Fire). The merchant is Laptop Repair Service (Electronics) with an ID GAN_R1_002. While the total amount is INR 79.00, it seems to fit into the category of card testing since the transaction does not have a high velocity or a large customer risk level.",
+          "key_findings": [
+            "card_testing",
+            "progressive_amounts",
+            "rapid_fire"
+          ],
+          "pattern_indicators": {
+            "card_testing": true,
+            "progressive_amounts": true,
+            "rapid_fire": true
+          },
+          "agent_name": "PatternDetector"
+        }
+      },
+      {
+        "agent": "GeographicAnalyst",
+        "timestamp": "2025-12-21T02:06:23.237353",
+        "analysis": {
+          "score": 85,
+          "confidence": 90,
+          "analysis": "Transaction details indicate an Indian customer with a laptop repair service in India, making this location impossible to be present.",
+          "key_findings": [
+            "physical impossibility"
+          ],
+          "geographic_indicators": {
+            "location_impossibility": true
+          },
+          "agent_name": "GeographicAnalyst"
+        }
+      },
+      {
+        "agent": "RiskAssessor",
+        "timestamp": "2025-12-21T02:06:50.501979",
+        "analysis": {
+          "score": 98,
+          "confidence": 100,
+          "analysis": "The transaction is INR 79.00, which is significantly higher than the customer average of INR 10.00 and a 690.0% amount deviation. The 690.0% value suggests there might be an issue with the merchant's credit card processing or billing system.",
+          "key_findings": [
+            {
+              "field": "progressive_testing",
+              "value": false,
+              "finding": "The transaction occurred in a non-continuous window of 0.0 minutes, indicating a progressive testing pattern."
+            }
+          ],
+          "financial_indicators": {
+            "amount_spike": true
+          },
+          "agent_name": "RiskAssessor"
+        }
+      },
+      {
+        "agent": "TemporalAnalyst",
+        "timestamp": "2025-12-21T02:07:02.248343",
+        "analysis": {
+          "score": 85,
+          "confidence": 95,
+          "analysis": "The transaction frequency is high, suggesting automated scripting.",
+          "key_findings": [
+            "finding1",
+            "finding2"
+          ],
+          "temporal_indicators": {
+            "scripted_behavior": true,
+            "regular_intervals": true
+          },
+          "agent_name": "TemporalAnalyst"
+        }
+      }
+    ],
+    "timestamp": "2025-12-21T02:07:02.263591",
+    "routing": {
+      "topic": "fraud-alerts",
+      "reason": "HIGH-CONFIDENCE FRAUD \u2192 AUTO-BLOCK",
+      "action": "Immediate block, no human review needed",
+      "confidence": 100,
+      "timestamp": "2025-12-21T02:07:02.263591"
+    },
+    "stored_at": "2025-12-21T02:07:02.278029"
+  },
+  {
+    "transaction_id": "GAN_R2_001",
+    "final_score": 94.96252566735113,
+    "decision": "FRAUD DETECTED",
+    "risk_analyst_score": 82,
+    "pattern_detective_score": 98,
+    "decision_maker_reasoning": "5-Agent Consensus Analysis:\n\nBehaviorAnalyst: 0% risk\n  - finding1\nPatternDetector: 98% risk\n  - card_testing\nGeographicAnalyst: 98% risk\n  - physical impossibility\nRiskAssessor: 82% risk\n  - card_testing\nTemporalAnalyst: 85% risk\n  - finding1\n\nStreaming Context:\n- Velocity: 2 txns in 700.0min\n- Streaming Bonus: +25 points\n",
+    "agent_discussion": [
+      {
+        "agent": "BehaviorAnalyst",
+        "timestamp": "2025-12-21T02:12:11.231960",
+        "analysis": {
+          "score": 0,
+          "confidence": 95,
+          "analysis": "The velocity of this transaction is unusually low, with only one transaction occurring every minute (0.0 minutes). This unusual transaction velocity suggests a possible automated script or behavior, as known fraud patterns often involve scripts for transactions to occur quickly and frequently.",
+          "key_findings": [
+            "finding1",
+            "finding2"
+          ],
+          "velocity_indicators": {
+            "high_velocity": true,
+            "automated_behavior": false,
+            "rapid_fire_attack": false,
+            "bot_like_pattern": false
+          },
+          "agent_name": "BehaviorAnalyst"
+        }
+      },
+      {
+        "agent": "PatternDetector",
+        "timestamp": "2025-12-21T02:12:28.539284",
+        "analysis": {
+          "score": 98,
+          "confidence": 100,
+          "analysis": "The transaction is INR 500, which matches the amount provided.",
+          "key_findings": [
+            "card_testing",
+            "progressive_amounts"
+          ],
+          "pattern_indicators": {
+            "card_testing": true,
+            "progressive_amounts": true
+          },
+          "agent_name": "PatternDetector"
+        }
+      },
+      {
+        "agent": "GeographicAnalyst",
+        "timestamp": "2025-12-21T02:12:48.721485",
+        "analysis": {
+          "score": 98,
+          "confidence": 100,
+          "analysis": "This transaction is for groceries, located in India, and occurs within a few minutes. Given the recent transactions in 700.0 minutes, this location is highly likely to be present, making it physically impossible to be in this location with recent transaction history.",
+          "key_findings": [
+            "physical impossibility",
+            "customer_location_impossibility"
+          ],
+          "geographic_indicators": {
+            "location_impossibility": true,
+            "travel_time_violation": false,
+            "vpn_proxy_suspected": true,
+            "location_hopping": true
+          },
+          "agent_name": "GeographicAnalyst"
+        }
+      },
+      {
+        "agent": "RiskAssessor",
+        "timestamp": "2025-12-21T02:13:08.537725",
+        "analysis": {
+          "score": 82,
+          "confidence": 97,
+          "analysis": "The transaction details provided indicate that the velocity of this transaction is unusually low, with only one transaction occurring every minute (0.0 minutes). This unusual transaction velocity suggests a possible automated script or behavior, as known fraud patterns often involve scripts for transactions to occur quickly and frequently.",
+          "key_findings": [
+            "card_testing",
+            "progressive_amounts",
+            "rapid_fire"
+          ],
+          "financial_indicators": {
+            "amount_spike": true,
+            "high_merchant_risk": true,
+            "unusual_payment_method": true
+          },
+          "agent_name": "RiskAssessor"
+        }
+      },
+      {
+        "agent": "TemporalAnalyst",
+        "timestamp": "2025-12-21T02:13:27.772028",
+        "analysis": {
+          "score": 85,
+          "confidence": 95,
+          "analysis": "The transaction is INR 79.00, which is significantly higher than the customer average of INR 10.00 and a 690.0% amount deviation. The 690.0% value suggests there might be an issue with the merchant's credit card processing or billing system.",
+          "key_findings": [
+            "finding1",
+            "finding2"
+          ],
+          "temporal_indicators": {
+            "scripted_behavior": true,
+            "regular_intervals": true
+          },
+          "agent_name": "TemporalAnalyst"
+        }
+      }
+    ],
+    "timestamp": "2025-12-21T02:13:27.785740",
+    "routing": {
+      "topic": "fraud-alerts",
+      "reason": "HIGH-CONFIDENCE FRAUD \u2192 AUTO-BLOCK",
+      "action": "Immediate block, no human review needed",
+      "confidence": 97.4,
+      "timestamp": "2025-12-21T02:13:27.785740"
+    },
+    "stored_at": "2025-12-21T02:13:27.798780"
+  },
+  {
+    "transaction_id": "GAN_R1_001",
+    "final_score": 100,
+    "decision": "FRAUD DETECTED",
+    "risk_analyst_score": 98,
+    "pattern_detective_score": 94.96252566735113,
+    "decision_maker_reasoning": "5-Agent Consensus Analysis:\n\nBehaviorAnalyst: 94.96% risk\n  - card_testing\nPatternDetector: 94.96252566735113% risk\n  - card_testing\nGeographicAnalyst: 98% risk\n  - finding1\nRiskAssessor: 98% risk\n  - card_testing\nTemporalAnalyst: 85% risk\n  - finding1\n\nStreaming Context:\n- Velocity: 0 txns in 0.0min\n- Streaming Bonus: +10 points\n",
+    "agent_discussion": [
+      {
+        "agent": "BehaviorAnalyst",
+        "timestamp": "2025-12-21T02:44:58.187362",
+        "analysis": {
+          "score": 94.96,
+          "confidence": 100,
+          "analysis": {
+            "finding1": true,
+            "finding2": false,
+            "finding3": false,
+            "velocity_indicators": {
+              "high_velocity": true,
+              "automated_behavior": true,
+              "rapid_fire_attack": false,
+              "bot_like_pattern": false
+            }
+          },
+          "key_findings": [
+            "card_testing",
+            "progressive_amounts",
+            "rapid_fire"
+          ],
+          "agent_name": "BehaviorAnalyst"
+        }
+      },
+      {
+        "agent": "PatternDetector",
+        "timestamp": "2025-12-21T02:45:32.588420",
+        "analysis": {
+          "score": 94.96252566735113,
+          "confidence": 100,
+          "analysis": "The transaction details indicate that the velocity of this transaction is unusually low, with only one transaction occurring every minute (0.0 minutes). This unusual transaction velocity suggests a possible automated script or behavior, as known fraud patterns often involve scripts for transactions to occur quickly and frequently.",
+          "key_findings": [
+            "card_testing",
+            "progressive_amounts"
+          ],
+          "pattern_indicators": {
+            "card_testing": true,
+            "progressive_amounts": true
+          },
+          "agent_name": "PatternDetector"
+        }
+      },
+      {
+        "agent": "GeographicAnalyst",
+        "timestamp": "2025-12-21T02:46:08.209194",
+        "analysis": {
+          "score": 98,
+          "confidence": 100,
+          "analysis": "The transaction details provided indicate that the velocity of this transaction is unusually low, with only one transaction occurring every minute (0.0 minutes). This unusual transaction velocity suggests a possible automated script or behavior, as known fraud patterns often involve scripts for transactions to occur quickly and frequently.",
+          "key_findings": [
+            "finding1",
+            "finding2"
+          ],
+          "geographic_indicators": {
+            "location_impossibility": true,
+            "travel_time_violation": false,
+            "vpn_proxy_suspected": true,
+            "location_hopping": true
+          },
+          "agent_name": "GeographicAnalyst"
+        }
+      },
+      {
+        "agent": "RiskAssessor",
+        "timestamp": "2025-12-21T02:46:41.194381",
+        "analysis": {
+          "score": 98,
+          "confidence": 100,
+          "analysis": "INR 25.00 is lower than the customer average of INR 0.00, indicating a possible automated script or behavior as known fraud patterns often involve scripts for transactions to occur quickly and frequently.",
+          "key_findings": [
+            "card_testing",
+            "progressive_amounts"
+          ],
+          "financial_indicators": {
+            "amount_spike": true,
+            "high_merchant_risk": true,
+            "unusual_payment_method": true
+          },
+          "agent_name": "RiskAssessor"
+        }
+      },
+      {
+        "agent": "TemporalAnalyst",
+        "timestamp": "2025-12-21T02:47:13.500955",
+        "analysis": {
+          "score": 85,
+          "confidence": 97.4,
+          "analysis": "The transaction appears to be indicative of a known automated script or behavior, possibly for transactions occurring in continuous windows of 0 minutes or less.",
+          "key_findings": [
+            "finding1",
+            "finding2",
+            "finding3"
+          ],
+          "temporal_indicators": {
+            "scripted_behavior": true,
+            "regular_intervals": true,
+            "unusual_hours": false
+          },
+          "agent_name": "TemporalAnalyst"
+        }
+      }
+    ],
+    "timestamp": "2025-12-21T02:47:13.538538",
+    "routing": {
+      "topic": "fraud-alerts",
+      "reason": "HIGH-CONFIDENCE FRAUD \u2192 AUTO-BLOCK",
+      "action": "Immediate block, no human review needed",
+      "confidence": 100,
+      "timestamp": "2025-12-21T02:47:13.538538"
+    },
+    "stored_at": "2025-12-21T02:47:13.617400"
+  },
+  {
+    "transaction_id": "GAN_R2_002",
+    "final_score": 100,
+    "decision": "FRAUD DETECTED",
+    "risk_analyst_score": 98,
+    "pattern_detective_score": 98,
+    "decision_maker_reasoning": "5-Agent Consensus Analysis:\n\nBehaviorAnalyst: 98% risk\n  - {'field': 'card_testing', 'value': True}\nPatternDetector: 98% risk\n  - card_testing\nGeographicAnalyst: 98% risk\n  - card_testing\nRiskAssessor: 98% risk\n  - finding1\nTemporalAnalyst: 94.96% risk\n  - card_testing\n\nStreaming Context:\n- Velocity: 2 txns in 0.2min\n- Streaming Bonus: +10 points\n",
+    "agent_discussion": [
+      {
+        "agent": "BehaviorAnalyst",
+        "timestamp": "2025-12-21T02:51:15.794810",
+        "analysis": {
+          "score": 98,
+          "confidence": 100,
+          "analysis": "The transaction is INR 25.00, which is significantly higher than the customer average of INR 17.50 and a 690.0% amount deviation. The 690.0% value suggests there might be an issue with the merchant's credit card processing or billing system.",
+          "key_findings": [
+            {
+              "field": "card_testing",
+              "value": true
+            },
+            {
+              "field": "progressive_amounts",
+              "value": true
+            }
+          ],
+          "velocity_indicators": {
+            "high_velocity": true,
+            "automated_behavior": true,
+            "rapid_fire_attack": false,
+            "bot_like_pattern": true
+          },
+          "agent_name": "BehaviorAnalyst"
+        }
+      },
+      {
+        "agent": "PatternDetector",
+        "timestamp": "2025-12-21T02:52:04.002533",
+        "analysis": {
+          "score": 98,
+          "confidence": 97.4,
+          "analysis": "The transaction details indicate that the velocity of this transaction is unusually low, with only one transaction occurring every minute (0.0 minutes). This unusual transaction velocity suggests a possible automated script or behavior, as known fraud patterns often involve scripts for transactions to occur quickly and frequently.",
+          "key_findings": [
+            "card_testing",
+            "progressive_amounts",
+            "rapid_fire"
+          ],
+          "pattern_indicators": {
+            "card_testing": true,
+            "progressive_amounts": true,
+            "attack_signature_match": false,
+            "coordinated_attack": false
+          },
+          "agent_name": "PatternDetector"
+        }
+      },
+      {
+        "agent": "GeographicAnalyst",
+        "timestamp": "2025-12-21T02:52:54.108121",
+        "analysis": {
+          "score": 98,
+          "confidence": 97.4,
+          "analysis": "This transaction appears to be indicative of a known automated script or behavior that involves transactions occurring in continuous windows of 0 minutes or less. The velocity of this transaction is unusually low, with only one transaction occurring every minute (0.0 minutes). This unusual transaction velocity suggests a possible automated script or behavior as known fraud patterns often involve scripts for transactions to occur quickly and frequently.",
+          "key_findings": [
+            "card_testing",
+            "progressive_amounts"
+          ],
+          "geographic_indicators": {
+            "location_impossibility": false,
+            "travel_time_violation": false,
+            "vpn_proxy_suspected": true,
+            "location_hopping": true
+          },
+          "agent_name": "GeographicAnalyst"
+        }
+      },
+      {
+        "agent": "RiskAssessor",
+        "timestamp": "2025-12-21T02:53:38.682488",
+        "analysis": {
+          "score": 98,
+          "confidence": 100,
+          "analysis": "-22.4%",
+          "key_findings": [
+            "finding1",
+            "finding2"
+          ],
+          "financial_indicators": {
+            "amount_spike": true,
+            "high_merchant_risk": true,
+            "unusual_payment_method": false
+          },
+          "agent_name": "RiskAssessor"
+        }
+      },
+      {
+        "agent": "TemporalAnalyst",
+        "timestamp": "2025-12-21T02:54:30.431003",
+        "analysis": {
+          "score": 94.96,
+          "confidence": 100,
+          "analysis": {
+            "finding1": true,
+            "finding2": false,
+            "finding3": false,
+            "velocity_indicators": {
+              "high_velocity": true,
+              "automated_behavior": true,
+              "rapid_fire_attack": false,
+              "bot_like_pattern": false
+            },
+            "temporal_indicators": {
+              "scripted_behavior": true,
+              "regular_intervals": true,
+              "unusual_hours": false
+            }
+          },
+          "key_findings": [
+            "card_testing",
+            "progressive_amounts"
+          ],
+          "timestamp": "2025-12-21T02:47:13.617400",
+          "agent_name": "TemporalAnalyst"
+        }
+      }
+    ],
+    "timestamp": "2025-12-21T02:54:30.444304",
+    "routing": {
+      "topic": "fraud-alerts",
+      "reason": "HIGH-CONFIDENCE FRAUD \u2192 AUTO-BLOCK",
+      "action": "Immediate block, no human review needed",
+      "confidence": 100,
+      "timestamp": "2025-12-21T02:54:30.444304"
+    },
+    "stored_at": "2025-12-21T02:54:30.456872"
+  }
+]
