@@ -1,289 +1,173 @@
-# Kafka Streaming Fraud Detection with AI Agents
+# Kafka Streaming Fraud Detection with AI Agents (GAN System)
 
-A real-time fraud detection system powered by **3 collaborative AI agents** using Google's Gemini API, Kafka streaming, and Kafka UI for visualization.
+A production-grade, real-time fraud detection system utilizing a **Multi-Agent GAN (Generative Adversarial Network)** architecture. The system features **5 specialized AI agents** powered by **Ollama (local LLM)**, real-time Kafka streaming, and a continuous learning loop where "Fraudster" AI and "Detector" AI learn from each other.
 
-## 🎯 Features
+![Architecture](https://via.placeholder.com/800x400?text=Fraud+Detection+GAN+Architecture)
 
-- **Multi-Agent AI System**: Three specialized agents collaborate on fraud detection
-  - 🔴 **Risk Analyst**: Financial risk assessment expert
-  - 🟢 **Pattern Detective**: Behavioral pattern recognition specialist
-  - 🔵 **Decision Maker**: Final decision synthesizer
-- **Real-time Streaming**: Kafka-based transaction processing
-- **Intelligent Analysis**: AI-powered fraud detection with detailed reasoning
-- **Visual Dashboard**: Kafka UI for monitoring transactions and decisions
-- **Realistic Data**: Automated generation of legitimate and suspicious transactions
+## 🌟 Key Features
+
+### 🧠 Advanced AI Architecture
+- **5-Agent "Blue Team" (Detectors)**:
+  - 🔴 **Behavior Analyst**: Velocity patterns & automated behavior
+  - 🟢 **Pattern Detector**: Known fraud signatures (card testing, etc.)
+  - 🔵 **Geographic Analyst**: Location impossibility & travel time
+  - 🟡 **Risk Assessor**: Financial deviation & merchant risk
+  - 🟣 **Temporal Analyst**: Timing anomalies & scripted behavior
+- **"Red Team" (Fraudster)**:
+  - 🕵️‍♂️ **Fraud Generator Agent**: Learns from past detection failures to generate sophisticated, evolving attacks.
+- **GAN-Based Learning Loop**: Detectors learn from caught fraud; Fraudsters learn from blocked attempts.
+
+### ⚡ Real-Time Intelligence
+- **Intelligent Routing (Layer 3)**: Confidence-based routing with feedback loop.
+  - `fraud-alerts` (>80% confidence)
+  - `human-review` (40-80% confidence)
+  - `approved-transactions` (<40% confidence)
+- **Streaming Context**: Real-time velocity tracking, customer profiling, and anomaly detection.
+- **Knowledge Base**: Persistent JSON-based memory ("File API") for storing fraud patterns and analyst feedback.
+
+### 🛠️ Tech Stack
+- **AI/LLM**: Ollama (qwen2.5:0.5b - Local Inference)
+- **Streaming**: Apache Kafka, Zookeeper, Kafka UI
+- **Backend**: Python 3.8+
+- **Containerization**: Docker Compose
+
+---
 
 ## 🏗️ Architecture
 
-```
-Transaction Generator → Kafka (transactions) → Consumer → Multi-Agent AI
-                                                              ↓
-                                                    ┌─────────┴─────────┐
-                                                    ↓                   ↓
-                                          fraud-alerts      legitimate-transactions
-                                                    ↓                   ↓
-                                                    └─────────┬─────────┘
-                                                              ↓
-                                                         Kafka UI
+```mermaid
+graph TD
+    subgraph "Red Team (Adversary)"
+        FG[Fraud Generator] -->|Generates Attack| KP[Kafka Producer]
+        KB[Knowledge Base] -->|Reads Failures| FG
+    end
+
+    subgraph "Blue Team (Detectors)"
+        KP -->|Raw Tx| C[Consumer]
+        C -->|Enrich| SC[Streaming Context]
+        SC -->|Context + History| PAC[Production Coordinator]
+        
+        subgraph "5-Agent Consensus"
+            PAC --> BA[Behavior Analyst]
+            PAC --> PD[Pattern Detector]
+            PAC --> GA[Geographic Analyst]
+            PAC --> RA[Risk Assessor]
+            PAC --> TA[Temporal Analyst]
+        end
+    end
+
+    subgraph "Decision & Routing"
+        PAC -->|Weighted Vote| IR[Intelligent Router]
+        IR -->|High Conf| FA[Topic: fraud-alerts]
+        IR -->|Med Conf| HR[Topic: human-review]
+        IR -->|Low Conf| AT[Topic: approved-transactions]
+        IR -->|Feedback| AF[Topic: analyst-feedback]
+        AF -->|Update Patterns| KB
+    end
 ```
 
-## 📋 Prerequisites
-
-- **Docker Desktop**: For running Kafka ecosystem
-- **Python 3.8+**: For the application
-- **Gemini API Key**: Get one from [Google AI Studio](https://makersuite.google.com/app/apikey)
+---
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
+### Prerequisites
+- **Docker Desktop**: For Kafka ecosystem
+- **Python 3.8+**: For the application
+- **Ollama**: For local AI inference ([Download Ollama](https://ollama.com/))
 
+### 1. Setup Environment
+
+Clone the repository:
 ```bash
 git clone https://github.com/Mukund-31/spa.git
 cd spa
 ```
 
-### 2. Run Setup Script (Windows)
-
-For quick setup, run the automated setup script:
-
+Run the automated setup (Windows):
 ```bash
 setup.bat
 ```
+*(Creates venv, installs dependencies, sets up .env)*
 
-This will:
-- Create a virtual environment
-- Install all Python dependencies
-- Create `.env` file from template
+### 2. Prepare AI Model
 
-**OR** follow the manual setup steps below:
-
-### 3. Configure Environment
-
-Create a `.env` file from the template:
-
+Install and run Ollama:
 ```bash
-copy .env.example .env
+# In a separate terminal
+ollama serve
 ```
 
-Edit `.env` and add your Gemini API key:
-
+Pull the required model:
+```bash
+ollama pull qwen2.5:0.5b
 ```
-GEMINI_API_KEY=your_actual_api_key_here
-```
 
-### 4. Start Kafka Infrastructure
+### 3. Start Infrastructure
 
+Start Kafka, Zookeeper and Kafka UI:
 ```bash
 docker-compose up -d
 ```
+*Access Kafka UI at [http://localhost:8080](http://localhost:8080)*
 
-Verify containers are running:
+### 4. Run Interactive Demo
 
+Launch the main demo application:
 ```bash
-docker-compose ps
+venv\Scripts\python.exe fraud_demo.py
 ```
-
-You should see `zookeeper`, `kafka`, and `kafka-ui` all in "Up" state.
-
-### 5. Install Python Dependencies (Manual Setup Only)
-
-If you didn't run `setup.bat`, install dependencies manually:
-
-```bash
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-### 6. Run the System
-
-**Option A: Run everything together**
-
-```bash
-python run.py
-```
-
-**Option B: Run components separately**
-
-Terminal 1 - Setup Kafka topics:
-```bash
-python kafka_admin.py
-```
-
-Terminal 2 - Start consumer:
-```bash
-python consumer.py
-```
-
-Terminal 3 - Start producer:
-```bash
-python producer.py
-```
-
-### 7. View Results in Kafka UI
-
-Open your browser to: **http://localhost:8080**
-
-Navigate to:
-- **Topics** → View all three topics
-- **transactions** → See incoming transactions
-- **fraud-alerts** → See detected fraud cases
-- **legitimate-transactions** → See approved transactions
-
-## 🧪 Testing
-
-Test the multi-agent system with sample transactions:
-
-```bash
-python test_agents.py
-```
-
-This will run three test cases:
-1. **Suspicious transaction**: Large wire transfer to high-risk location
-2. **Legitimate transaction**: Normal grocery purchase
-3. **Medium risk transaction**: Electronics purchase from China
-
-You'll see the complete agent discussion and decision-making process in color-coded output.
-
-## 📊 How It Works
-
-### Multi-Agent Collaboration
-
-1. **Risk Analyst** analyzes the transaction first:
-   - Evaluates transaction amount
-   - Assesses merchant category risk
-   - Checks geographic risk factors
-   - Provides financial risk score (0-100)
-
-2. **Pattern Detective** performs behavioral analysis:
-   - Detects timing anomalies
-   - Identifies velocity patterns
-   - Spots location inconsistencies
-   - Provides behavioral risk score (0-100)
-
-3. **Decision Maker** synthesizes findings:
-   - Reviews both agents' analyses
-   - Weighs all evidence
-   - Makes final decision (APPROVE/REVIEW/REJECT)
-   - Provides comprehensive reasoning
-
-### Decision Routing
-
-- **Score 0-40**: APPROVE → `legitimate-transactions` topic
-- **Score 41-70**: REVIEW → `legitimate-transactions` topic (flagged for review)
-- **Score 71-100**: REJECT → `fraud-alerts` topic
-
-## 🎨 Console Output
-
-The system provides rich, color-coded console output:
-
-- 🔴 **Red**: Risk Analyst analysis
-- 🟢 **Green**: Pattern Detective analysis
-- 🔵 **Blue**: Decision Maker synthesis
-- 🟡 **Yellow**: Final decision summary
-- 📊 **Statistics**: Periodic processing stats
-
-## 📁 Project Structure
-
-```
-spa/
-├── agents/
-│   ├── base_agent.py          # Base agent class
-│   ├── risk_analyst.py        # Financial risk agent
-│   ├── pattern_detective.py   # Behavioral pattern agent
-│   └── decision_maker.py      # Final decision agent
-├── agent_coordinator.py       # Multi-agent orchestration
-├── config.py                  # Configuration management
-├── models.py                  # Data models
-├── producer.py                # Transaction generator
-├── consumer.py                # Fraud detection consumer
-├── kafka_admin.py             # Kafka topic management
-├── test_agents.py             # Agent testing script
-├── run.py                     # Main orchestration
-├── docker-compose.yml         # Kafka infrastructure
-├── requirements.txt           # Python dependencies
-└── .env                       # Environment variables
-```
-
-## ⚙️ Configuration
-
-Edit `.env` to customize:
-
-```bash
-# Transaction generation rate (per second)
-TRANSACTION_RATE=2
-
-# Percentage of suspicious transactions (0.1 = 10%)
-SUSPICIOUS_TRANSACTION_RATIO=0.1
-
-# Kafka connection
-KAFKA_BOOTSTRAP_SERVERS=localhost:9093
-```
-
-## 🐛 Troubleshooting
-
-### Kafka Connection Issues
-
-```bash
-# Check if containers are running
-docker-compose ps
-
-# View logs
-docker-compose logs kafka
-
-# Restart containers
-docker-compose restart
-```
-
-### Python Errors
-
-```bash
-# Ensure virtual environment is activated
-venv\Scripts\activate
-
-# Reinstall dependencies
-pip install -r requirements.txt --force-reinstall
-```
-
-### API Key Issues
-
-- Verify your Gemini API key is correct in `.env`
-- Check API quota at [Google AI Studio](https://makersuite.google.com/)
-
-## 📈 Monitoring
-
-### Kafka UI (http://localhost:8080)
-
-- **Topics**: View all topics and their messages
-- **Consumers**: Monitor consumer groups and lag
-- **Brokers**: Check Kafka broker health
-
-### Console Output
-
-- Real-time agent discussions
-- Processing statistics every 10 transactions
-- Color-coded decision summaries
-
-## 🛑 Stopping the System
-
-Press `Ctrl+C` in the terminal running the system.
-
-To stop Docker containers:
-
-```bash
-docker-compose down
-```
-
-## 🎓 Learn More
-
-- [Kafka Documentation](https://kafka.apache.org/documentation/)
-- [Google Gemini API](https://ai.google.dev/)
-- [Kafka UI](https://github.com/provectus/kafka-ui)
-
-## 📝 License
-
-This project is for educational and demonstration purposes.
 
 ---
 
-**Built with ❤️ using Kafka, Gemini AI, and Python**
+## 🎮 Demo Scenarios
+
+The `fraud_demo.py` script offers interactive scenarios:
+
+1.  **Normal Transaction**: Simulates a legitimate grocery purchase (Auto-Approve).
+2.  **High Velocity Attack**: Simulates a "card testing" attack (12 rapid transactions).
+3.  **Unusual Amount Spike**: Simulates a sudden high-value purchase divergence.
+4.  **🥊 AI vs AI (GAN Mode)**: 
+    - The **Fraudster** generates a sophisticated attack using the Knowledge Base.
+    - The **Detectors** analyze it using 5-agent consensus.
+    - The result is logged to `analyst-feedback`.
+    - **Round 2**: The Fraudster reads why it failed and *evolves* its strategy.
+    - **Round 2**: The Detectors read the previous pattern and *adapt* their defense.
+
+---
+
+## 📂 Project Structure
+
+```
+spa/
+├── agents/                 # AI Agents
+│   ├── behavior_analyst.py
+│   ├── pattern_detector_v2.py
+│   ├── geographic_analyst.py
+│   ├── risk_assessor.py
+│   └── fraud_generator.py  # The Adversary
+├── knowledge_base.py       # Persistent memory (File API)
+├── intelligent_router.py   # Confidence-based routing
+├── production_coordinator.py # 5-Agent Orchestrator
+├── streaming_context.py    # Velocity & Profiling
+├── fraud_demo.py           # Interactive CLI Demo
+├── docker-compose.yml      # Kafka Infastructure
+└── requirements.txt        # Dependencies
+```
+
+## 📊 Monitoring
+
+- **Kafka UI**: [http://localhost:8080](http://localhost:8080)
+  - Watch `analyst-feedback` to see the learning loop in real-time.
+  - Watch `fraud-alerts` for blocked transactions.
+
+## 🤝 Contributing
+
+1. Fork the Project
+2. Create your Feature Branch
+3. Commit your Changes
+4. Push to the Branch
+5. Open a Pull Request
+
+## 📝 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
