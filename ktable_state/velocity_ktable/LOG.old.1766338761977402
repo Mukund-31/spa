@@ -1,0 +1,114 @@
+2025/12/21-23:05:37.209363 3cec RocksDB version: 9.8.4
+2025/12/21-23:05:37.209521 3cec Compile date 2025-07-09 11:14:20
+2025/12/21-23:05:37.209589 3cec DB SUMMARY
+2025/12/21-23:05:37.209622 3cec Host name (Env):  XPS17-M
+2025/12/21-23:05:37.209658 3cec DB Session ID:  YSWIEMVJ80U764KYDSMY
+2025/12/21-23:05:37.211475 3cec CURRENT file:  CURRENT
+2025/12/21-23:05:37.211560 3cec IDENTITY file:  IDENTITY
+2025/12/21-23:05:37.211742 3cec MANIFEST file:  MANIFEST-000005 size: 99 Bytes
+2025/12/21-23:05:37.211791 3cec SST files in ./ktable_state\velocity_ktable dir, Total Num: 0, files: 
+2025/12/21-23:05:37.211808 3cec Write Ahead Log file in ./ktable_state\velocity_ktable: 000004.log size: 15661 ; 
+2025/12/21-23:05:37.211823 3cec                         Options.error_if_exists: 0
+2025/12/21-23:05:37.212060 3cec                       Options.create_if_missing: 1
+2025/12/21-23:05:37.212073 3cec                         Options.paranoid_checks: 1
+2025/12/21-23:05:37.212081 3cec             Options.flush_verify_memtable_count: 1
+2025/12/21-23:05:37.212088 3cec          Options.compaction_verify_record_count: 1
+2025/12/21-23:05:37.212094 3cec                               Options.track_and_verify_wals_in_manifest: 0
+2025/12/21-23:05:37.212099 3cec        Options.verify_sst_unique_id_in_manifest: 1
+2025/12/21-23:05:37.212103 3cec                                     Options.env: 0000016423BED9C0
+2025/12/21-23:05:37.212109 3cec                                      Options.fs: WinFS
+2025/12/21-23:05:37.212118 3cec                                Options.info_log: 0000016423AF07B0
+2025/12/21-23:05:37.212122 3cec                Options.max_file_opening_threads: 16
+2025/12/21-23:05:37.212126 3cec                              Options.statistics: 0000000000000000
+2025/12/21-23:05:37.212131 3cec                               Options.use_fsync: 0
+2025/12/21-23:05:37.212138 3cec                       Options.max_log_file_size: 0
+2025/12/21-23:05:37.212145 3cec                  Options.max_manifest_file_size: 1073741824
+2025/12/21-23:05:37.212151 3cec                   Options.log_file_time_to_roll: 0
+2025/12/21-23:05:37.212158 3cec                       Options.keep_log_file_num: 1000
+2025/12/21-23:05:37.212164 3cec                    Options.recycle_log_file_num: 0
+2025/12/21-23:05:37.212168 3cec                         Options.allow_fallocate: 1
+2025/12/21-23:05:37.212172 3cec                        Options.allow_mmap_reads: 0
+2025/12/21-23:05:37.212176 3cec                       Options.allow_mmap_writes: 0
+2025/12/21-23:05:37.212180 3cec                        Options.use_direct_reads: 0
+2025/12/21-23:05:37.212184 3cec                        Options.use_direct_io_for_flush_and_compaction: 0
+2025/12/21-23:05:37.212188 3cec          Options.create_missing_column_families: 0
+2025/12/21-23:05:37.212192 3cec                              Options.db_log_dir: 
+2025/12/21-23:05:37.212196 3cec                                 Options.wal_dir: 
+2025/12/21-23:05:37.212200 3cec                Options.table_cache_numshardbits: 6
+2025/12/21-23:05:37.212204 3cec                         Options.WAL_ttl_seconds: 0
+2025/12/21-23:05:37.212210 3cec                       Options.WAL_size_limit_MB: 0
+2025/12/21-23:05:37.212216 3cec                        Options.max_write_batch_group_size_bytes: 1048576
+2025/12/21-23:05:37.212222 3cec             Options.manifest_preallocation_size: 4194304
+2025/12/21-23:05:37.212229 3cec                     Options.is_fd_close_on_exec: 1
+2025/12/21-23:05:37.212236 3cec                   Options.advise_random_on_open: 1
+2025/12/21-23:05:37.212240 3cec                    Options.db_write_buffer_size: 0
+2025/12/21-23:05:37.212246 3cec                    Options.write_buffer_manager: 0000016423C512E0
+2025/12/21-23:05:37.212251 3cec           Options.random_access_max_buffer_size: 1048576
+2025/12/21-23:05:37.212255 3cec                      Options.use_adaptive_mutex: 0
+2025/12/21-23:05:37.212259 3cec                            Options.rate_limiter: 0000000000000000
+2025/12/21-23:05:37.212266 3cec     Options.sst_file_manager.rate_bytes_per_sec: 0
+2025/12/21-23:05:37.212314 3cec                       Options.wal_recovery_mode: 2
+2025/12/21-23:05:37.212324 3cec                  Options.enable_thread_tracking: 0
+2025/12/21-23:05:37.212328 3cec                  Options.enable_pipelined_write: 0
+2025/12/21-23:05:37.212333 3cec                  Options.unordered_write: 0
+2025/12/21-23:05:37.212339 3cec         Options.allow_concurrent_memtable_write: 1
+2025/12/21-23:05:37.212346 3cec      Options.enable_write_thread_adaptive_yield: 1
+2025/12/21-23:05:37.212353 3cec             Options.write_thread_max_yield_usec: 100
+2025/12/21-23:05:37.212359 3cec            Options.write_thread_slow_yield_usec: 3
+2025/12/21-23:05:37.212364 3cec                               Options.row_cache: None
+2025/12/21-23:05:37.212368 3cec                              Options.wal_filter: None
+2025/12/21-23:05:37.212372 3cec             Options.avoid_flush_during_recovery: 0
+2025/12/21-23:05:37.212376 3cec             Options.allow_ingest_behind: 0
+2025/12/21-23:05:37.212380 3cec             Options.two_write_queues: 0
+2025/12/21-23:05:37.212384 3cec             Options.manual_wal_flush: 0
+2025/12/21-23:05:37.212388 3cec             Options.wal_compression: 0
+2025/12/21-23:05:37.212392 3cec             Options.background_close_inactive_wals: 0
+2025/12/21-23:05:37.212396 3cec             Options.atomic_flush: 0
+2025/12/21-23:05:37.212400 3cec             Options.avoid_unnecessary_blocking_io: 0
+2025/12/21-23:05:37.212404 3cec             Options.prefix_seek_opt_in_only: 0
+2025/12/21-23:05:37.212408 3cec                 Options.persist_stats_to_disk: 0
+2025/12/21-23:05:37.212412 3cec                 Options.write_dbid_to_manifest: 1
+2025/12/21-23:05:37.212416 3cec                 Options.write_identity_file: 1
+2025/12/21-23:05:37.212420 3cec                 Options.log_readahead_size: 0
+2025/12/21-23:05:37.212425 3cec                 Options.file_checksum_gen_factory: Unknown
+2025/12/21-23:05:37.212429 3cec                 Options.best_efforts_recovery: 0
+2025/12/21-23:05:37.212433 3cec                Options.max_bgerror_resume_count: 2147483647
+2025/12/21-23:05:37.212437 3cec            Options.bgerror_resume_retry_interval: 1000000
+2025/12/21-23:05:37.212441 3cec             Options.allow_data_in_errors: 0
+2025/12/21-23:05:37.212445 3cec             Options.db_host_id: __hostname__
+2025/12/21-23:05:37.212449 3cec             Options.enforce_single_del_contracts: true
+2025/12/21-23:05:37.212456 3cec             Options.metadata_write_temperature: kUnknown
+2025/12/21-23:05:37.212461 3cec             Options.wal_write_temperature: kUnknown
+2025/12/21-23:05:37.212465 3cec             Options.max_background_jobs: 2
+2025/12/21-23:05:37.212469 3cec             Options.max_background_compactions: -1
+2025/12/21-23:05:37.212473 3cec             Options.max_subcompactions: 1
+2025/12/21-23:05:37.212477 3cec             Options.avoid_flush_during_shutdown: 0
+2025/12/21-23:05:37.212481 3cec           Options.writable_file_max_buffer_size: 1048576
+2025/12/21-23:05:37.212485 3cec             Options.delayed_write_rate : 16777216
+2025/12/21-23:05:37.212489 3cec             Options.max_total_wal_size: 0
+2025/12/21-23:05:37.212493 3cec             Options.delete_obsolete_files_period_micros: 21600000000
+2025/12/21-23:05:37.212497 3cec                   Options.stats_dump_period_sec: 600
+2025/12/21-23:05:37.212501 3cec                 Options.stats_persist_period_sec: 600
+2025/12/21-23:05:37.212505 3cec                 Options.stats_history_buffer_size: 1048576
+2025/12/21-23:05:37.212509 3cec                          Options.max_open_files: -1
+2025/12/21-23:05:37.212514 3cec                          Options.bytes_per_sync: 0
+2025/12/21-23:05:37.212518 3cec                      Options.wal_bytes_per_sync: 0
+2025/12/21-23:05:37.212522 3cec                   Options.strict_bytes_per_sync: 0
+2025/12/21-23:05:37.212526 3cec       Options.compaction_readahead_size: 2097152
+2025/12/21-23:05:37.212530 3cec                  Options.max_background_flushes: -1
+2025/12/21-23:05:37.212534 3cec Options.daily_offpeak_time_utc: 
+2025/12/21-23:05:37.212564 3cec Compression algorithms supported:
+2025/12/21-23:05:37.212572 3cec 	kZSTD supported: 1
+2025/12/21-23:05:37.212576 3cec 	kSnappyCompression supported: 1
+2025/12/21-23:05:37.212581 3cec 	kBZip2Compression supported: 1
+2025/12/21-23:05:37.212585 3cec 	kZlibCompression supported: 1
+2025/12/21-23:05:37.212589 3cec 	kLZ4Compression supported: 1
+2025/12/21-23:05:37.212593 3cec 	kXpressCompression supported: 0
+2025/12/21-23:05:37.212597 3cec 	kLZ4HCCompression supported: 1
+2025/12/21-23:05:37.212601 3cec 	kZSTDNotFinalCompression supported: 1
+2025/12/21-23:05:37.212608 3cec Fast CRC32 supported: Not supported on x86
+2025/12/21-23:05:37.212613 3cec DMutex implementation: std::mutex
+2025/12/21-23:05:37.212617 3cec Jemalloc supported: 0
+2025/12/21-23:05:37.213692 3cec [WARN] [db/db_impl/db_impl_open.cc:2311] DB::Open() failed: IO error: Failed to create lock file: ./ktable_state\velocity_ktable/LOCK: The process cannot access the file because it is being used by another process.
+2025/12/21-23:05:37.213738 3cec [db/db_impl/db_impl.cc:500] Shutdown: canceling all background work
+2025/12/21-23:05:37.213806 3cec [db/db_impl/db_impl.cc:709] Shutdown complete

@@ -38,53 +38,45 @@ class RiskAssessorAgent(BaseAgent):
         streaming_context = context.get('streaming_context', {}) if context else {}
         velocity = streaming_context.get('velocity', {})
         profile = streaming_context.get('profile', {})
-        anomalies = streaming_context.get('anomalies', {})
         
-        prompt = f"""{self.get_system_prompt()}
+        amount = transaction['amount']
+        avg_amount = profile.get('avg_amount', 0)
+        
+        # SIMPLE PROMPT FOR SMALL MODEL
+        prompt = f"""You are assessing financial risk.
 
-Analyze this transaction for FINANCIAL RISK and AMOUNT DEVIATION:
+TRANSACTION:
+Amount: INR {amount:.2f}
+Category: {transaction['merchant_category']}
 
-Transaction Details:
-- ID: {transaction['transaction_id']}
-- Amount: INR {transaction['amount']:,.2f}
-- Merchant: {transaction['merchant_name']} ({transaction['merchant_category']})
-- Payment Method: {transaction['payment_method']}
+BASELINE:
+- Customer average: INR {avg_amount:.2f}
+- Transactions in window: {velocity.get('transaction_count', 0)}
 
-STREAMING INTELLIGENCE (Financial Context):
-- Customer Average: INR {profile.get('avg_amount', 0):.2f}
-- Total Transactions: {profile.get('total_transactions', 0)}
-- Amount Deviation: {anomalies.get('amount_deviation_pct', 0):.1f}%
-- Velocity: {velocity.get('transaction_count', 0)} transactions in {velocity.get('time_span_minutes', 0):.1f} minutes
-- Total Amount in Window: INR {velocity.get('total_amount', 0):.2f}
+ANALYSIS:
+Current amount is {amount:.2f}, customer average is {avg_amount:.2f}.
+Deviation: {((amount / avg_amount - 1) * 100) if avg_amount > 0 else 0:.0f}%
 
-KNOWN FRAUD PATTERNS (LEARNING FROM HISTORY):
-{context.get('fraud_patterns', 'None')}
-Check if this matches any previously detected fraud patterns.
+RULES:
+1. If customer avg = 0: Return score 15 (first transaction)
+2. If amount is 5x or more than average: Return score 70-85 (major spike)
+3. If amount is 2-5x average: Return score 50-65 (moderate spike)
+4. If amount <= 2x average: Return score 15-25 (normal variation)
+5. If velocity > 10: Add +20 to score (velocity multiplier)
 
-Provide your analysis in JSON format:
+Return JSON:
 {{
     "score": <number 0-100>,
     "confidence": <number 0-100>,
-    "analysis": "<detailed financial risk analysis>",
-    "key_findings": ["finding1", "finding2", "finding3"],
+    "analysis": "<one sentence>",
+    "key_findings": ["<brief finding>"],
     "financial_indicators": {{
-        "amount_spike": <boolean>,
-        "high_merchant_risk": <boolean>,
-        "unusual_payment_method": <boolean>,
-        "progressive_testing": <boolean>
+        "amount_spike": <true if >5x avg>,
+        "high_merchant_risk": false,
+        "unusual_payment_method": false,
+        "progressive_testing": false
     }}
-}}
-
-Focus on:
-1. How does INR {transaction['amount']:,.2f} compare to customer avg INR {profile.get('avg_amount', 0):.2f}?
-2. Is the {anomalies.get('amount_deviation_pct', 0):.1f}% deviation suspicious?
-3. Does the merchant category pose high risk?
-4. Should velocity ({velocity.get('transaction_count', 0)} txns) increase the risk score?
-
-CRITICAL: 
-- If deviation > 500% = Major amount spike
-- If velocity > 10 txns = Apply velocity multiplier (1.5x risk)
-- Small amounts + high velocity = Card testing pattern"""
+}}"""
 
         response = self.generate_response(prompt)
         
@@ -98,6 +90,17 @@ CRITICAL:
             
             result = json.loads(response_clean)
             result['agent_name'] = self.name
+            
+            # CRITICAL OVERRIDE: Force correct scores for first transaction or normal amounts
+            if avg_amount == 0:
+                result['score'] = 15
+                result['confidence'] = 85
+                result['analysis'] = "First transaction - establishing baseline"
+                result['key_findings'] = ["First transaction for customer"]
+            elif amount <= 2000:
+                result['score'] = min(result.get('score', 20), 25)
+                result['analysis'] = f"Normal purchase amount INR {amount:.2f}"
+            
             return result
             
         except json.JSONDecodeError:

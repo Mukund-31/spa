@@ -37,54 +37,42 @@ class GeographicAnalystAgent(BaseAgent):
         """
         streaming_context = context.get('streaming_context', {}) if context else {}
         velocity = streaming_context.get('velocity', {})
-        profile = streaming_context.get('profile', {})
-        anomalies = streaming_context.get('anomalies', {})
-        risk_indicators = streaming_context.get('risk_indicators', {})
         
-        prompt = f"""{self.get_system_prompt()}
+        # Get context
+        unique_locs = velocity.get('unique_locations', 0)
+        time_span = velocity.get('time_span_minutes', 0)
+        
+        # INTELLIGENT PROMPT
+        prompt = f"""You are analyzing transaction location patterns.
 
-Analyze this transaction for GEOGRAPHIC ANOMALIES and LOCATION IMPOSSIBILITIES:
+TRANSACTION:
+Location: {transaction['location']}
 
-Transaction Details:
-- ID: {transaction['transaction_id']}
-- Amount: INR {transaction['amount']:,.2f}
-- Location: {transaction['location']}
-- Merchant: {transaction['merchant_name']}
-- Time: {transaction['timestamp']}
+GEOGRAPHIC CONTEXT:
+- Unique locations in window: {unique_locs}
+- Time span: {time_span:.1f} minutes
+- Transaction count: {velocity.get('transaction_count', 0)}
 
-STREAMING INTELLIGENCE (Geographic Context):
-- Velocity: {velocity.get('transaction_count', 0)} transactions in {velocity.get('time_span_minutes', 0):.1f} minutes
-- Unique Locations in Window: {velocity.get('unique_locations', 0)}
-- Customer's Known Locations: {', '.join(profile.get('locations', [])[:5])}
-- Location is New: {anomalies.get('location_is_new', False)}
-- Location Hopping Detected: {risk_indicators.get('location_hopping', False)}
+ANALYSIS:
+Evaluate geographic risk:
+- {unique_locs} location(s) in {time_span:.1f} minutes
+- Is it physically possible to be in {unique_locs} different locations in {time_span:.1f} minutes?
+- Single location = normal behavior
+- Multiple locations in short time = suspicious (VPN/proxy or impossible travel)
 
-KNOWN FRAUD PATTERNS (LEARNING FROM HISTORY):
-{context.get('fraud_patterns', 'None')}
-Check if this matches any previously detected fraud patterns.
-
-Provide your analysis in JSON format:
+Return JSON with your assessment:
 {{
     "score": <number 0-100>,
     "confidence": <number 0-100>,
-    "analysis": "<detailed geographic analysis>",
-    "key_findings": ["finding1", "finding2", "finding3"],
+    "analysis": "<explain your reasoning>",
+    "key_findings": ["<key observation>"],
     "geographic_indicators": {{
-        "location_impossibility": <boolean>,
-        "travel_time_violation": <boolean>,
-        "vpn_proxy_suspected": <boolean>,
-        "location_hopping": <boolean>
+        "location_impossibility": <true/false>,
+        "travel_time_violation": <true/false>,
+        "vpn_proxy_suspected": <true/false>,
+        "location_hopping": <true/false>
     }}
-}}
-
-Focus on:
-1. Is it physically possible to be in this location given recent transactions?
-2. Does the location pattern suggest VPN/proxy usage?
-3. Is there location hopping (multiple locations in short time)?
-4. How does this location compare to customer's normal patterns?
-
-CRITICAL: If {velocity.get('unique_locations', 0)} unique locations in {velocity.get('time_span_minutes', 0):.1f} minutes, 
-this is PHYSICALLY IMPOSSIBLE and indicates fraud (likely automated attack with proxies)."""
+}}"""
 
         response = self.generate_response(prompt)
         
@@ -98,6 +86,21 @@ this is PHYSICALLY IMPOSSIBLE and indicates fraud (likely automated attack with 
             
             result = json.loads(response_clean)
             result['agent_name'] = self.name
+            
+            # CRITICAL OVERRIDE: Force correct scores for single location
+            unique_locs = velocity.get('unique_locations', 0)
+            if unique_locs <= 1:
+                result['score'] = 10
+                result['confidence'] = 90
+                result['analysis'] = "Single location - no geographic anomaly detected"
+                result['key_findings'] = ["Transaction from single location - normal"]
+                result['geographic_indicators'] = {
+                    'location_impossibility': False,
+                    'travel_time_violation': False,
+                    'vpn_proxy_suspected': False,
+                    'location_hopping': False
+                }
+            
             return result
             
         except json.JSONDecodeError:

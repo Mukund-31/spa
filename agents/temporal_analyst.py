@@ -38,51 +38,43 @@ class TemporalAnalystAgent(BaseAgent):
         streaming_context = context.get('streaming_context', {}) if context else {}
         velocity = streaming_context.get('velocity', {})
         
-        prompt = f"""{self.get_system_prompt()}
+        # Get context
+        tx_count = velocity.get('transaction_count', 0)
+        vel_score = velocity.get('velocity_score', 0)
+        time_span = velocity.get('time_span_minutes', 0)
+        
+        # INTELLIGENT PROMPT
+        prompt = f"""You are detecting automated/scripted behavior in transactions.
 
-Analyze this transaction for TEMPORAL PATTERNS and SCRIPTED BEHAVIOR:
+TIMING CONTEXT:
+- Transactions: {tx_count} in {time_span:.1f} minutes
+- Velocity: {vel_score:.2f} transactions/minute
+- Time between transactions: {(time_span / tx_count if tx_count > 0 else 0):.1f} minutes average
 
-Transaction Details:
-- ID: {transaction['transaction_id']}
-- Amount: INR {transaction['amount']:,.2f}
-- Timestamp: {transaction['timestamp']}
-- Merchant: {transaction['merchant_name']}
+ANALYSIS:
+Evaluate if this shows automated behavior:
+- Human behavior: Usually < 1 transaction/minute, irregular timing
+- Bot/script: Usually > 1 transaction/minute, regular intervals
+- Current velocity {vel_score:.2f} txn/min suggests {"automated behavior" if vel_score > 1.5 else "human behavior" if vel_score < 1.0 else "borderline"}
 
-STREAMING INTELLIGENCE (Temporal Context):
-- Transaction Count: {velocity.get('transaction_count', 0)} in {velocity.get('time_span_minutes', 0):.1f} minutes
-- Velocity Score: {velocity.get('velocity_score', 0):.2f} transactions/minute
-- Time Span: {velocity.get('time_span_minutes', 0):.1f} minutes
+Consider:
+- {tx_count} transactions in {time_span:.1f} minutes
+- Regular intervals suggest scripted behavior
+- Irregular timing suggests human
 
-- Time Span: {velocity.get('time_span_minutes', 0):.1f} minutes
-
-KNOWN FRAUD PATTERNS (LEARNING FROM HISTORY):
-{context.get('fraud_patterns', 'None')}
-Check if this matches any previously detected fraud patterns.
-
-Provide your analysis in JSON format:
+Return JSON with your assessment:
 {{
     "score": <number 0-100>,
     "confidence": <number 0-100>,
-    "analysis": "<detailed temporal analysis>",
-    "key_findings": ["finding1", "finding2", "finding3"],
+    "analysis": "<explain your reasoning>",
+    "key_findings": ["<key observation>"],
     "temporal_indicators": {{
-        "scripted_behavior": <boolean>,
-        "regular_intervals": <boolean>,
-        "unusual_hours": <boolean>,
-        "high_frequency": <boolean>
+        "scripted_behavior": <true/false>,
+        "regular_intervals": <true/false>,
+        "unusual_hours": false,
+        "high_frequency": <true/false>
     }}
-}}
-
-Focus on:
-1. Does the transaction frequency suggest automated/scripted behavior?
-2. Are transactions occurring at regular intervals (e.g., every 12 seconds)?
-3. Is the transaction time unusual (e.g., 3 AM)?
-4. Does the velocity ({velocity.get('velocity_score', 0):.2f} txns/min) indicate automation?
-
-CRITICAL PATTERNS:
-- If velocity > 1.0 txn/min = Likely automated
-- If {velocity.get('transaction_count', 0)} transactions in {velocity.get('time_span_minutes', 0):.1f} min = High frequency attack
-- Regular intervals = Scripted bot behavior"""
+}}"""
 
         response = self.generate_response(prompt)
         
@@ -96,6 +88,25 @@ CRITICAL PATTERNS:
             
             result = json.loads(response_clean)
             result['agent_name'] = self.name
+            
+            # CRITICAL OVERRIDE: Force correct scores for low velocity
+            tx_count = velocity.get('transaction_count', 0)
+            vel_score = velocity.get('velocity_score', 0)
+            if tx_count <= 1:
+                result['score'] = 10
+                result['confidence'] = 85
+                result['analysis'] = "Single transaction - no timing pattern detected"
+                result['key_findings'] = ["Insufficient data for temporal analysis"]
+                result['temporal_indicators'] = {
+                    'scripted_behavior': False,
+                    'regular_intervals': False,
+                    'unusual_hours': False,
+                    'high_frequency': False
+                }
+            elif vel_score < 1.0:
+                result['score'] = min(result.get('score', 20), 20)
+                result['analysis'] = "Low velocity - human behavior pattern"
+            
             return result
             
         except json.JSONDecodeError:

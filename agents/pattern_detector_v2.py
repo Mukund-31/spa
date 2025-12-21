@@ -37,55 +37,47 @@ class PatternDetectorV2Agent(BaseAgent):
         """
         streaming_context = context.get('streaming_context', {}) if context else {}
         velocity = streaming_context.get('velocity', {})
-        profile = streaming_context.get('profile', {})
-        risk_indicators = streaming_context.get('risk_indicators', {})
         
-        prompt = f"""{self.get_system_prompt()}
+        # Get context
+        tx_count = velocity.get('transaction_count', 0)
+        unique_merchants = velocity.get('unique_merchants', 0)
+        
+        # INTELLIGENT PROMPT
+        prompt = f"""You are detecting fraud patterns in transactions.
 
-Analyze this transaction for ATTACK PATTERNS and FRAUD SIGNATURES:
+TRANSACTION:
+Amount: INR {transaction['amount']:,.2f}
+Merchant: {transaction['merchant_name']}
 
-Transaction Details:
-- ID: {transaction['transaction_id']}
-- Amount: INR {transaction['amount']:,.2f}
-- Merchant: {transaction['merchant_name']} ({transaction['merchant_category']})
-- Customer: {transaction['customer_id']}
+PATTERN CONTEXT:
+- Transactions in window: {tx_count}
+- Unique merchants: {unique_merchants}
+- Average amount in window: INR {velocity.get('avg_amount', 0):.2f}
 
-STREAMING INTELLIGENCE (Pattern Context):
-- Velocity: {velocity.get('transaction_count', 0)} transactions in {velocity.get('time_span_minutes', 0):.1f} minutes
-- Average Amount in Window: INR {velocity.get('avg_amount', 0):.2f}
-- Unique Merchants: {velocity.get('unique_merchants', 0)}
-- Customer Risk Level: {profile.get('total_transactions', 0)} total transactions
-- Merchant Hopping: {risk_indicators.get('merchant_hopping', False)}
+ANALYSIS:
+Evaluate if this shows fraud patterns:
+- Card testing: Multiple small transactions to test if card works
+- Progressive amounts: Amounts increasing over time (₹10→₹50→₹100)
+- Merchant hopping: Many different merchants in short time
 
-KNOWN FRAUD PATTERNS (LEARNING FROM HISTORY):
-{context.get('fraud_patterns', 'None')}
-Check if this matches any previously detected fraud patterns.
+Consider:
+- {tx_count} transactions suggests {"high velocity pattern" if tx_count > 10 else "normal activity" if tx_count > 1 else "insufficient data"}
+- {unique_merchants} merchants suggests {"merchant hopping" if unique_merchants > 3 else "normal"}
+- Amount {transaction['amount']:.2f} is {"small (card testing?)" if transaction['amount'] < 100 else "normal"}
 
-Provide your analysis in JSON format:
+Return JSON with your risk assessment (0-100):
 {{
     "score": <number 0-100>,
     "confidence": <number 0-100>,
-    "analysis": "<detailed pattern analysis>",
-    "key_findings": ["finding1", "finding2", "finding3"],
+    "analysis": "<explain your reasoning>",
+    "key_findings": ["<key observation>"],
     "pattern_indicators": {{
-        "card_testing": <boolean>,
-        "progressive_amounts": <boolean>,
-        "attack_signature_match": <boolean>,
-        "coordinated_attack": <boolean>
+        "card_testing": <true/false>,
+        "progressive_amounts": <true/false>,
+        "attack_signature_match": false,
+        "coordinated_attack": <true/false>
     }}
-}}
-
-Focus on:
-1. Does this match card testing pattern (small amounts + high velocity)?
-2. Is there progressive amount testing (increasing amounts over time)?
-3. Does the pattern match known fraud signatures?
-4. Is this part of a coordinated attack?
-
-CRITICAL PATTERNS:
-- Card Testing: Small amounts (< INR 100) + velocity > 10 txns
-- Progressive Testing: Amounts increasing (₹10 → ₹50 → ₹100 → ₹500)
-- Merchant Hopping: {velocity.get('unique_merchants', 0)} merchants in short time
-- Rapid Fire: {velocity.get('transaction_count', 0)} txns in {velocity.get('time_span_minutes', 0):.1f} min"""
+}}"""
 
         response = self.generate_response(prompt)
         
@@ -99,6 +91,21 @@ CRITICAL PATTERNS:
             
             result = json.loads(response_clean)
             result['agent_name'] = self.name
+            
+            # CRITICAL OVERRIDE: Force correct scores for zero-context scenarios
+            tx_count = velocity.get('transaction_count', 0)
+            if tx_count <= 1:
+                result['score'] = 10
+                result['confidence'] = 80
+                result['analysis'] = "Insufficient data - single transaction, no pattern possible"
+                result['key_findings'] = ["Single transaction - no pattern detection possible"]
+                result['pattern_indicators'] = {
+                    'card_testing': False,
+                    'progressive_amounts': False,
+                    'attack_signature_match': False,
+                    'coordinated_attack': False
+                }
+            
             return result
             
         except json.JSONDecodeError:

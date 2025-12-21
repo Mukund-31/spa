@@ -41,47 +41,44 @@ class BehaviorAnalystAgent(BaseAgent):
         velocity = streaming_context.get('velocity', {})
         profile = streaming_context.get('profile', {})
         
-        prompt = f"""{self.get_system_prompt()}
+        # Get context data
+        tx_count = velocity.get('transaction_count', 0)
+        avg_amount = profile.get('avg_amount', 0)
+        
+        # SIMPLE PROMPT FOR SMALL MODEL
+        prompt = f"""You are a fraud detection agent analyzing transaction velocity.
 
-Analyze this transaction for VELOCITY PATTERNS and AUTOMATED BEHAVIOR:
+TRANSACTION:
+Amount: INR {transaction['amount']:,.2f}
+Merchant: {transaction['merchant_name']} ({transaction['merchant_category']})
 
-Transaction Details:
-- ID: {transaction['transaction_id']}
-- Amount: INR {transaction['amount']:,.2f}
-- Customer: {transaction['customer_id']}
-- Merchant: {transaction['merchant_name']} ({transaction['merchant_category']})
-- Time: {transaction['timestamp']}
+VELOCITY DATA:
+- Transactions in last 5 min: {tx_count}
+- Customer's average amount: INR {avg_amount:.2f}
 
-STREAMING INTELLIGENCE (Critical Context):
-- Velocity: {velocity.get('transaction_count', 0)} transactions in {velocity.get('time_span_minutes', 0):.1f} minutes
-- Customer Baseline: {profile.get('total_transactions', 0)} total transactions, avg INR {profile.get('avg_amount', 0):.2f}
-- Velocity Score: {velocity.get('velocity_score', 0):.2f} transactions/minute
-- Unique Locations: {velocity.get('unique_locations', 0)}
-- Unique Merchants: {velocity.get('unique_merchants', 0)}
+CONTEXT ANALYSIS:
+- This is transaction #{tx_count} in the current window
+- Customer baseline: {avg_amount:.2f} INR average
 
-PREVIOUSLY DETECTED FRAUD PATTERNS (LEARNING CONTEXT):
-{context.get('fraud_patterns', 'None')}
-Check if this transaction matches any of these known fraud patterns.
+RULES:
+1. If transactions = 0 or 1: Return score 10-15 (insufficient data)
+2. If transactions = 2-5: Return score 20-35 (low velocity, normal)
+3. If transactions = 6-10: Return score 40-60 (moderate velocity, watch)
+4. If transactions > 10: Return score 70-90 (high velocity, suspicious)
 
-Provide your analysis in JSON format:
+Return JSON:
 {{
     "score": <number 0-100>,
     "confidence": <number 0-100>,
-    "analysis": "<detailed velocity and behavior analysis>",
-    "key_findings": ["finding1", "finding2", "finding3"],
+    "analysis": "<explain your reasoning in one sentence>",
+    "key_findings": ["<key observation>"],
     "velocity_indicators": {{
-        "high_velocity": <boolean>,
-        "automated_behavior": <boolean>,
-        "rapid_fire_attack": <boolean>,
-        "bot_like_pattern": <boolean>
+        "high_velocity": <true if >10 txns>,
+        "automated_behavior": <true if >10 txns>,
+        "rapid_fire_attack": <true if >15 txns>,
+        "bot_like_pattern": <true if >10 txns>
     }}
-}}
-
-Focus on:
-1. Is the velocity (transactions/minute) unusual for this customer?
-2. Does the pattern suggest automated/scripted behavior?
-3. Is this a rapid-fire attack (many transactions in short time)?
-4. How does this compare to customer's normal behavior?"""
+}}"""
 
         response = self.generate_response(prompt)
         
@@ -104,6 +101,12 @@ Focus on:
             
             result = json.loads(response_clean)
             result['agent_name'] = self.name
+            
+            # Cap score for first transaction
+            if avg_amount == 0:
+                result['score'] = min(result.get('score', 15), 20)
+                result['analysis'] = "First transaction for customer - establishing baseline"
+            
             return result
             
         except (json.JSONDecodeError, AttributeError) as e:

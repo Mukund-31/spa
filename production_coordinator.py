@@ -1,5 +1,6 @@
 """
 Production Agent Coordinator - Orchestrates 5 specialized agents with weighted voting
+Uses KTable-backed velocity windows for rapid-fire attack detection
 """
 import asyncio
 import json
@@ -12,14 +13,31 @@ from agents.geographic_analyst import GeographicAnalystAgent
 from agents.risk_assessor import RiskAssessorAgent
 from agents.temporal_analyst import TemporalAnalystAgent
 from models import Transaction, FraudDecision
-from streaming_context import StreamingContextStore
+
+# Try to use KTable-based context, fallback to in-memory
+try:
+    from velocity_ktable import StreamingContextWithKTable
+    USE_KTABLE = True
+    print("✅ Using KTable-backed velocity tracking (RocksDB state store)")
+except ImportError:
+    from streaming_context import StreamingContextStore
+    USE_KTABLE = False
+    print("⚠️ Using in-memory velocity tracking (KTable not available)")
 
 # Initialize colorama
 init(autoreset=True)
 
 
 class ProductionAgentCoordinator:
-    """Production coordinator with 5 specialized agents and weighted voting"""
+    """
+    Production coordinator with 5 specialized agents and weighted voting
+    
+    Architecture Components (from diagram):
+    - KStream: transactions topic → consumed and analyzed
+    - KTable: Velocity Context (5-min tumbling window)
+    - KTable: Customer Profiles (global table for joins)
+    - Streaming Enrichment: leftJoin for transaction enrichment
+    """
     
     # Weighted voting configuration
     AGENT_WEIGHTS = {
@@ -31,15 +49,33 @@ class ProductionAgentCoordinator:
     }
     
     def __init__(self):
-        """Initialize all 5 specialized agents and streaming context"""
+        """Initialize all 5 specialized agents and KTable-backed streaming context"""
         self.behavior_analyst = BehaviorAnalystAgent()
         self.pattern_detector = PatternDetectorV2Agent()
         self.geographic_analyst = GeographicAnalystAgent()
         self.risk_assessor = RiskAssessorAgent()
         self.temporal_analyst = TemporalAnalystAgent()
         
-        self.context_store = StreamingContextStore(velocity_window_minutes=5)
+        # Use KTable-backed context if available (matches architecture diagram)
+        if USE_KTABLE:
+            self.context_store = StreamingContextWithKTable(state_dir='./ktable_state')
+            print("📊 KTable State Store: ./ktable_state")
+        else:
+            from streaming_context import StreamingContextStore
+            self.context_store = StreamingContextStore(velocity_window_minutes=5)
+        
         self.discussion_log = []
+        
+        # Log architecture components
+        print("=" * 60)
+        print("🚀 Production Coordinator Initialized")
+        print("=" * 60)
+        print("📊 Architecture Components:")
+        print("   ├─ Velocity Window: 5-min tumbling (KTable-backed)")
+        print("   ├─ Customer Profiles: KTable with leftJoin")
+        print("   ├─ State Store: RocksDB" if USE_KTABLE else "   ├─ State Store: In-Memory")
+        print("   └─ Rapid-fire Detection: >15 txns OR >3 txn/min")
+        print("=" * 60)
     
     def analyze_transaction(self, transaction: Transaction) -> tuple[FraudDecision, float]:
         """
@@ -69,8 +105,15 @@ class ProductionAgentCoordinator:
         # Run all 5 agents in parallel
         agent_insights = self._run_parallel_analysis(tx_dict, streaming_context)
         
-        # Phase 2: Calculate Weighted Risk Score
-        print(f"\n{Fore.CYAN}⚖️  PHASE 2: Weighted Voting Consensus{Style.RESET_ALL}")
+        # Phase 2: Agent Collaboration (Talking Stage)
+        if self._requires_collaboration(agent_insights, streaming_context):
+            print(f"\n{Fore.MAGENTA}💬 PHASE 2: Agent Collaboration (Talking Stage){Style.RESET_ALL}\n")
+            collaboration_insights = self._run_collaboration(tx_dict, streaming_context, agent_insights)
+            agent_insights.extend(collaboration_insights)
+        else:
+            print(f"\n{Fore.CYAN}⚖️  PHASE 2: Weighted Voting Consensus{Style.RESET_ALL}")
+        
+        # Calculate Weighted Risk Score
         base_score = self._calculate_weighted_risk_score(agent_insights)
         print(f"  Base Risk Score (weighted average): {base_score:.1f}%\n")
         
@@ -90,8 +133,8 @@ class ProductionAgentCoordinator:
             transaction_id=transaction.transaction_id,
             final_score=final_score,
             decision=decision_text,
-            risk_analyst_score=next((a['score'] for a in agent_insights if a['agent_name'] == 'RiskAssessor'), 50),
-            pattern_detective_score=next((a['score'] for a in agent_insights if a['agent_name'] == 'PatternDetector'), 50),
+            risk_analyst_score=next((a.get('score', 50) for a in agent_insights if a.get('agent_name') == 'RiskAssessor'), 50),
+            pattern_detective_score=next((a.get('score', 50) for a in agent_insights if a.get('agent_name') == 'PatternDetector'), 50),
             decision_maker_reasoning=self._generate_reasoning(agent_insights, streaming_context, bonus),
             agent_discussion=self.discussion_log,
             timestamp=datetime.now().isoformat()
@@ -173,6 +216,173 @@ class ProductionAgentCoordinator:
         
         return insights
     
+    def _requires_collaboration(self, agent_insights: List[Dict], streaming_context: Dict) -> bool:
+        """
+        Check if Phase 2 collaboration is required.
+        Triggers: risk disagreement, high velocity, or profile present.
+        """
+        # Get scores safely
+        scores = []
+        for a in agent_insights:
+            try:
+                scores.append(float(a.get('score', 50)))
+            except:
+                scores.append(50.0)
+        
+        # 1. Risk disagreement: variance > 40 points
+        if len(scores) > 1:
+            import statistics
+            variance = statistics.variance(scores)
+            if variance > 400:  # std dev > 20
+                return True
+        
+        # 2. High velocity
+        velocity = streaming_context.get('velocity', {})
+        if velocity.get('transaction_count', 0) > 5:
+            return True
+        
+        # 3. Profile present
+        if streaming_context.get('static_profile'):
+            return True
+        
+        return False
+    
+    def _run_collaboration(self, tx_dict: Dict, streaming_context: Dict, phase1_insights: List[Dict]) -> List[Dict]:
+        """
+        Run Phase 2 collaboration between agent pairs.
+        - Velocity collaboration: PatternDetector + TemporalAnalyst
+        - Profile collaboration: BehaviorAnalyst + RiskAssessor
+        Returns list of collaboration insights.
+        """
+        collaboration_insights = []
+        velocity = streaming_context.get('velocity', {})
+        baseline = streaming_context.get('baseline', {})
+        
+        # === Velocity Collaboration ===
+        if velocity.get('transaction_count', 0) > 5:
+            print(f"  {Fore.YELLOW}🔄 Velocity Collaboration: PatternDetector ↔ TemporalAnalyst{Style.RESET_ALL}")
+            
+            velocity_question = f"High velocity detected ({velocity['transaction_count']} transactions in {velocity.get('time_span_minutes', 0):.1f} min). Does this align with automated attack patterns?"
+            print(f"     Question: \"{velocity_question}\"")
+            
+            # PatternDetector answers
+            pattern_collab = self.pattern_detector.collaborate(velocity_question, tx_dict, {'velocity': velocity})
+            print(f"     {Fore.GREEN}PatternDetector: Score {pattern_collab.get('score', 50)}/100{Style.RESET_ALL}")
+            reasoning = pattern_collab.get('reasoning') or pattern_collab.get('analysis') or 'Analysis based on patterns'
+            print(f"       → {str(reasoning)[:150]}")
+            collaboration_insights.append(pattern_collab)
+            
+            # TemporalAnalyst answers
+            temporal_collab = self.temporal_analyst.collaborate(velocity_question, tx_dict, {'velocity': velocity})
+            print(f"     {Fore.MAGENTA}TemporalAnalyst: Score {temporal_collab.get('score', 50)}/100{Style.RESET_ALL}")
+            reasoning = temporal_collab.get('reasoning') or temporal_collab.get('analysis') or 'Temporal pattern analysis'
+            print(f"       → {str(reasoning)[:150]}")
+            collaboration_insights.append(temporal_collab)
+            print()
+        
+        # === Profile Collaboration ===
+        if baseline.get('avg_amount', 0) > 0:
+            print(f"  {Fore.YELLOW}🔄 Profile Collaboration: BehaviorAnalyst ↔ RiskAssessor{Style.RESET_ALL}")
+            
+            profile_question = f"Customer profile shows INR {baseline.get('avg_amount', 0):,.2f} average transactions, {baseline.get('risk_level', 'LOW')} risk level. How does this affect your analysis?"
+            print(f"     Question: \"{profile_question}\"")
+            
+            # BehaviorAnalyst answers
+            behavior_collab = self.behavior_analyst.collaborate(profile_question, tx_dict, {'baseline': baseline})
+            print(f"     {Fore.RED}BehaviorAnalyst: Score {behavior_collab.get('score', 50)}/100{Style.RESET_ALL}")
+            reasoning = behavior_collab.get('reasoning') or behavior_collab.get('analysis') or 'Behavior pattern analysis'
+            print(f"       → {str(reasoning)[:150]}")
+            collaboration_insights.append(behavior_collab)
+            
+            # RiskAssessor answers
+            risk_collab = self.risk_assessor.collaborate(profile_question, tx_dict, {'baseline': baseline})
+            print(f"     {Fore.YELLOW}RiskAssessor: Score {risk_collab.get('score', 50)}/100{Style.RESET_ALL}")
+            reasoning = risk_collab.get('reasoning') or risk_collab.get('analysis') or 'Risk assessment based on profile'
+            print(f"       → {str(reasoning)[:150]}")
+            collaboration_insights.append(risk_collab)
+            print()
+        
+        # === Final Consensus (Lead Investigator) ===
+        print(f"  {Fore.CYAN}👨‍💼 Lead Investigator Building Consensus...{Style.RESET_ALL}")
+        consensus = self._build_streaming_consensus(tx_dict, streaming_context, phase1_insights + collaboration_insights)
+        collaboration_insights.append(consensus)
+        print(f"     {Fore.CYAN}Consensus Score: {consensus.get('score', 50)}/100{Style.RESET_ALL}")
+        reasoning = consensus.get('reasoning') or consensus.get('analysis') or 'Synthesized from all agent inputs'
+        print(f"       → {str(reasoning)[:200]}\n")
+        
+        return collaboration_insights
+    
+    def _build_streaming_consensus(self, tx_dict: Dict, streaming_context: Dict, all_insights: List[Dict]) -> Dict:
+        """
+        Build final streaming consensus from all agent insights.
+        This is the 'lead investigator' that synthesizes everything.
+        """
+        import re
+        
+        # Build agent findings summary
+        findings_summary = []
+        for insight in all_insights:
+            name = insight.get('agent_name', 'Unknown')
+            score = insight.get('score', 50)
+            reasoning = insight.get('reasoning') or insight.get('analysis') or 'No reasoning'
+            if isinstance(reasoning, str):
+                reasoning = reasoning[:100]
+            else:
+                reasoning = str(reasoning)[:100]
+            findings_summary.append(f"- {name} (Risk: {score}/100): {reasoning}")
+        
+        velocity = streaming_context.get('velocity', {})
+        baseline = streaming_context.get('baseline', {})
+        
+        prompt = f"""You are the Lead Fraud Investigator synthesizing all agent findings.
+
+STREAMING CONTEXT:
+- Velocity: {velocity.get('transaction_count', 0)} transactions in {velocity.get('time_span_minutes', 0):.1f} minutes
+- Customer Avg: INR {baseline.get('avg_amount', 0):,.2f}
+- Risk Level: {baseline.get('risk_level', 'LOW')}
+
+TRANSACTION:
+- Amount: INR {tx_dict.get('amount', 0):,.2f}
+- Merchant: {tx_dict.get('merchant_name', 'Unknown')}
+- Location: {tx_dict.get('location', 'Unknown')}
+
+AGENT FINDINGS:
+{chr(10).join(findings_summary)}
+
+Your task:
+1. How does streaming context enhance this decision?
+2. What is the overall fraud risk with streaming intelligence?
+3. What are the key factors from AI + streaming data?
+
+You MUST respond in this exact JSON format:
+{{
+    "score": <0-100 overall risk score>,
+    "confidence": <0-100 confidence>,
+    "reasoning": "<synthesis of all findings>",
+    "recommendation": "<APPROVE/REVIEW/REJECT>"
+}}"""
+        
+        # Use behavior analyst's generate_response (any agent works)
+        response = self.behavior_analyst.generate_response(prompt)
+        
+        # Clean response
+        response_clean = response
+        if '<think>' in response:
+            response_clean = re.sub(r'<think>.*?</think>', '', response, flags=re.DOTALL).strip()
+        
+        try:
+            result = json.loads(response_clean)
+            result['agent_name'] = 'StreamingIntelligenceConsensus'
+            return result
+        except:
+            return {
+                'agent_name': 'StreamingIntelligenceConsensus',
+                'score': 50,
+                'confidence': 50,
+                'reasoning': 'Consensus synthesis',
+                'recommendation': 'REVIEW'
+            }
+    
     def _print_detailed_analysis_table(self, insights, streaming_context):
         """Print detailed analysis table with complete findings"""
         print(f"\n{Fore.CYAN}{'='*120}")
@@ -184,6 +394,17 @@ class ProductionAgentCoordinator:
             agent_name = insight.get('agent_name', 'Unknown')
             score = insight.get('score', 50)
             confidence = insight.get('confidence', 50)
+            
+            # Handle malformed values from LLM
+            try:
+                score = float(score)
+            except (ValueError, TypeError):
+                score = 50.0
+            
+            try:
+                confidence = float(confidence)
+            except (ValueError, TypeError):
+                confidence = 50.0
             
             # Get complete finding text
             finding = ""
@@ -276,9 +497,21 @@ class ProductionAgentCoordinator:
         total_confidence = 0.0
         
         for insight in agent_insights:
-            agent_name = insight['agent_name']
-            score = insight.get('score', 50) / 100.0  # Normalize to 0-1
-            confidence = insight.get('confidence', 50) / 100.0
+            agent_name = insight.get('agent_name', 'Unknown')
+            score = insight.get('score', 50)
+            confidence = insight.get('confidence', 50)
+            
+            # Handle malformed values
+            try:
+                score = float(score) / 100.0  # Normalize to 0-1
+            except (ValueError, TypeError):
+                score = 0.5  # Default to 50%
+            
+            try:
+                confidence = float(confidence) / 100.0
+            except (ValueError, TypeError):
+                confidence = 0.5  # Default to 50%
+            
             weight = self.AGENT_WEIGHTS.get(agent_name, 0.1)
             
             weighted_sum += score * weight * confidence
@@ -289,38 +522,69 @@ class ProductionAgentCoordinator:
         return min(100, max(0, base_score))
     
     def _apply_streaming_bonus(self, base_score, streaming_context, agent_insights) -> tuple:
-        """Apply streaming intelligence bonus"""
+        """Apply streaming intelligence and profile-based risk bonuses (matches Java implementation)"""
         bonus = 0.0
         reasons = []
         
         velocity = streaming_context['velocity']
         anomalies = streaming_context['anomalies']
         risk_indicators = streaming_context['risk_indicators']
+        baseline = streaming_context.get('baseline', {})
         
-        # High velocity bonus
-        if velocity['transaction_count'] > 15:
+        # CRITICAL: Don't apply bonuses if insufficient data
+        if velocity['transaction_count'] <= 1:
+            print(f"  {Fore.CYAN}No streaming bonus (insufficient transaction history){Style.RESET_ALL}\n")
+            return base_score, 0.0
+        
+        # === VELOCITY BONUSES ===
+        tx_count = velocity.get('transaction_count', 0)
+        if tx_count > 15:
             bonus += 20
-            reasons.append(f"Rapid-fire attack ({velocity['transaction_count']} txns)")
-        elif velocity['transaction_count'] > 10:
+            reasons.append(f"Rapid-fire attack ({tx_count} txns)")
+        elif tx_count > 10:
             bonus += 10
-            reasons.append(f"High velocity ({velocity['transaction_count']} txns)")
+            reasons.append(f"High velocity ({tx_count} txns)")
         
-        # Amount deviation bonus
-        if anomalies['amount_deviation_pct'] > 500:
+        # === AMOUNT DEVIATION BONUS (matches Java: profile.isAmountUnusual) ===
+        amt_deviation = anomalies.get('amount_deviation_pct', 0)
+        profile_avg = streaming_context.get('profile', {}).get('avg_amount', 0)
+        if amt_deviation > 500 and profile_avg > 0:
+            bonus += 20  # +0.20 in Java
+            reasons.append(f"Extreme amount spike ({amt_deviation:.0f}% deviation)")
+        elif amt_deviation > 300 and profile_avg > 0:
             bonus += 15
-            reasons.append(f"Extreme amount spike ({anomalies['amount_deviation_pct']:.0f}%)")
-        elif anomalies['amount_deviation_pct'] > 300:
-            bonus += 10
-            reasons.append(f"Large amount deviation ({anomalies['amount_deviation_pct']:.0f}%)")
+            reasons.append(f"Large amount deviation ({amt_deviation:.0f}%)")
         
+        # === PROFILE-BASED BONUSES (matches Java AgentCoordinator) ===
+        # High risk customer bonus
+        if risk_indicators.get('high_risk_customer'):
+            bonus += 10  # +0.10 in Java
+            reasons.append(f"High-risk customer profile")
+        
+        # Location mismatch (different from primary location)
+        if anomalies.get('location_mismatch'):
+            bonus += 10
+            reasons.append(f"Location differs from primary ({baseline.get('primary_location')})")
+        
+        # Unusual category
+        if anomalies.get('category_is_unusual'):
+            bonus += 5
+            reasons.append(f"Unusual merchant category")
+        
+        # Exceeds daily limit
+        if risk_indicators.get('exceeds_daily_limit'):
+            bonus += 15
+            reasons.append(f"Exceeds daily spending limit (₹{baseline.get('daily_limit', 0):,.0f})")
+        
+        # === PATTERN BONUSES ===
         # Geographic impossibility bonus
         if risk_indicators.get('location_hopping'):
             bonus += 10
             reasons.append("Location hopping detected")
         
         # Progressive pattern bonus (from PatternDetector)
-        pattern_insight = next((a for a in agent_insights if a['agent_name'] == 'PatternDetector'), {})
-        if pattern_insight.get('pattern_indicators', {}).get('progressive_amounts'):
+        pattern_insight = next((a for a in agent_insights if a.get('agent_name') == 'PatternDetector'), {})
+        if pattern_insight.get('pattern_indicators', {}).get('progressive_amounts') and velocity['transaction_count'] > 5:
             bonus += 10
             reasons.append("Progressive testing pattern")
         
@@ -338,9 +602,26 @@ class ProductionAgentCoordinator:
     
     def _determine_decision(self, final_score, agent_insights) -> tuple:
         """Determine decision and confidence"""
-        # Calculate confidence based on agent agreement
-        scores = [a.get('score', 50) for a in agent_insights]
-        avg_confidence = sum(a.get('confidence', 50) for a in agent_insights) / len(agent_insights)
+        # Calculate confidence based on agent agreement with error handling
+        scores = []
+        confidences = []
+        
+        for a in agent_insights:
+            # Handle score
+            score = a.get('score', 50)
+            try:
+                scores.append(float(score))
+            except (ValueError, TypeError):
+                scores.append(50.0)
+            
+            # Handle confidence
+            conf = a.get('confidence', 50)
+            try:
+                confidences.append(float(conf))
+            except (ValueError, TypeError):
+                confidences.append(50.0)
+        
+        avg_confidence = sum(confidences) / len(confidences) if confidences else 50.0
         
         # Check agreement (low std dev = high agreement)
         import statistics
@@ -366,30 +647,63 @@ class ProductionAgentCoordinator:
         reasoning = f"5-Agent Consensus Analysis:\n\n"
         
         for insight in agent_insights:
-            reasoning += f"{insight['agent_name']}: {insight.get('score', 50)}% risk\n"
-            if insight.get('key_findings'):
-                reasoning += f"  - {insight['key_findings'][0]}\n"
+            reasoning += f"{insight.get('agent_name', 'Unknown')}: {insight.get('score', 50)}% risk\n"
+            key_findings = insight.get('key_findings', [])
+            if key_findings:
+                reasoning += f"  - {key_findings[0]}\n"
         
         reasoning += f"\nStreaming Context:\n"
-        reasoning += f"- Velocity: {velocity['transaction_count']} txns in {velocity['time_span_minutes']:.1f}min\n"
+        reasoning += f"- Velocity: {velocity.get('transaction_count', 0)} txns in {velocity.get('time_span_minutes', 0):.1f}min\n"
         reasoning += f"- Streaming Bonus: +{bonus:.0f} points\n"
         
         return reasoning
     
     def _print_header(self, transaction, streaming_context):
-        """Print analysis header"""
+        """Print analysis header with complete streaming context"""
         print(f"\n{Fore.CYAN}{'='*80}")
         print(f"{Fore.CYAN}🔍 PRODUCTION 5-AGENT FRAUD ANALYSIS")
         print(f"{Fore.CYAN}Transaction ID: {transaction.transaction_id}")
         print(f"{Fore.CYAN}Amount: INR {transaction.amount:,.2f}")
+        print(f"{Fore.CYAN}Location: {transaction.location}")
+        print(f"{Fore.CYAN}Merchant: {transaction.merchant_name} ({transaction.merchant_category})")
         
         velocity = streaming_context['velocity']
-        print(f"{Fore.YELLOW}📊 Streaming Context:")
-        print(f"{Fore.YELLOW}   Velocity: {velocity['transaction_count']} txns in {velocity['time_span_minutes']:.1f}min")
-        print(f"{Fore.YELLOW}   Customer Avg: INR {streaming_context['profile']['avg_amount']:.2f}")
+        profile = streaming_context['profile']
+        anomalies = streaming_context['anomalies']
+        baseline = streaming_context.get('baseline', {})
         
-        if streaming_context['anomalies']['velocity_alert']:
+        print(f"\n{Fore.YELLOW}📊 Streaming Context:")
+        print(f"{Fore.YELLOW}   Velocity: {velocity.get('transaction_count', 0)} txns in {velocity.get('time_span_minutes', 0):.1f}min")
+        print(f"{Fore.YELLOW}   Velocity Score: {velocity.get('velocity_score', 0):.2f} txn/min")
+        print(f"{Fore.YELLOW}   Unique Locations: {velocity.get('unique_locations', 0)}")
+        print(f"{Fore.YELLOW}   Unique Merchants: {velocity.get('unique_merchants', 0)}")
+        
+        print(f"\n{Fore.CYAN}📋 Customer Baseline:")
+        avg_amount = baseline.get('avg_amount', 0) or (profile.get('avg_amount', 0) if profile else 0)
+        print(f"{Fore.CYAN}   Avg Amount: INR {avg_amount:.2f}")
+        print(f"{Fore.CYAN}   Risk Level: {baseline.get('risk_level', 'LOW')}")
+        if baseline.get('primary_location'):
+            print(f"{Fore.CYAN}   Primary Location: {baseline['primary_location']}")
+        if baseline.get('typical_categories'):
+            print(f"{Fore.CYAN}   Typical Categories: {', '.join(baseline['typical_categories'][:3])}")
+        print(f"{Fore.CYAN}   Daily Limit: INR {baseline.get('daily_limit', 100000):,.0f}")
+        
+        print(f"\n{Fore.YELLOW}⚠️  Anomalies:")
+        print(f"{Fore.YELLOW}   Amount Deviation: {anomalies.get('amount_deviation_pct', 0):.1f}%")
+        
+        if anomalies.get('velocity_alert'):
             print(f"{Fore.RED}   ⚠️  VELOCITY ALERT!{Style.RESET_ALL}")
+        if anomalies.get('rapid_fire_detected'):
+            print(f"{Fore.RED}   ⚠️  RAPID FIRE DETECTED!{Style.RESET_ALL}")
+        risk_indicators = streaming_context.get('risk_indicators', {})
+        if risk_indicators.get('location_hopping'):
+            print(f"{Fore.RED}   ⚠️  LOCATION HOPPING DETECTED!{Style.RESET_ALL}")
+        if anomalies.get('location_mismatch'):
+            print(f"{Fore.RED}   ⚠️  LOCATION DIFFERS FROM PRIMARY!{Style.RESET_ALL}")
+        if anomalies.get('category_is_unusual'):
+            print(f"{Fore.RED}   ⚠️  UNUSUAL MERCHANT CATEGORY!{Style.RESET_ALL}")
+        if risk_indicators.get('high_risk_customer'):
+            print(f"{Fore.RED}   ⚠️  HIGH-RISK CUSTOMER!{Style.RESET_ALL}")
         
         print(f"{Fore.CYAN}{'='*80}{Style.RESET_ALL}\n")
     
@@ -416,7 +730,7 @@ class ProductionAgentCoordinator:
         print(f"Confidence: {confidence:.0f}%")
         print(f"\nAgent Scores:")
         for insight in agent_insights:
-            print(f"  {insight['agent_name']}: {insight.get('score', 50)}%")
+            print(f"  {insight.get('agent_name', 'Unknown')}: {insight.get('score', 50)}%")
         
         # Show why this decision was made
         print(f"\n{Fore.CYAN}🔍 DECISION REASONING:{Style.RESET_ALL}")

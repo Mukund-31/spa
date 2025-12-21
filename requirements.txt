@@ -3,3 +3,10 @@ google-generativeai==0.3.2
 python-dotenv==1.0.0
 Faker==20.1.0
 colorama==0.4.6
+# Kafka Streams (KTable + Velocity Windows)
+faust-streaming==0.10.19
+# RocksDB for KTable state store
+python-rocksdb==0.7.0
+# Dashboard and HTTP
+flask==3.0.0
+requests==2.31.0
