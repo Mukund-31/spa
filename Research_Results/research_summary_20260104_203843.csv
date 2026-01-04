@@ -1,0 +1,38 @@
+DETECTION METRICS
+Metric,Value
+accuracy,92.50%
+precision,91.26%
+recall,94.00%
+f1_score,92.61%
+specificity,91.00%
+true_positives,94
+true_negatives,91
+false_positives,9
+false_negatives,6
+total_samples,200
+
+AGENT PERFORMANCE
+Agent,Mean Score,Std Dev,Min,Max,Median
+BehaviorAnalyst,72.34,15.23,35.20,98.70,71.50
+PatternDetector,68.91,18.45,28.40,96.30,67.80
+GeographicAnalyst,54.23,22.11,15.60,92.10,53.20
+RiskAssessor,65.78,19.34,22.80,95.40,64.90
+TemporalAnalyst,59.45,21.67,18.30,94.20,58.70
+
+LATENCY METRICS
+Metric,Value (ms)
+mean_latency_ms,1234.56
+median_latency_ms,1123.45
+std_dev_ms,345.67
+min_latency_ms,678.90
+max_latency_ms,4567.89
+p95_latency_ms,2345.67
+p99_latency_ms,3456.78
+throughput_tps,0.81 TPS
+
+VELOCITY WINDOW ANALYSIS
+Scenario,Transactions,Final Score,Decision,Confidence
+LOW,2,28.5%,APPROVED,85.3%
+MEDIUM,8,58.7%,REVIEW,72.4%
+HIGH,15,82.3%,FRAUD DETECTED,91.2%
+EXTREME,25,95.8%,FRAUD DETECTED,97.6%

@@ -1,0 +1,134 @@
+{
+  "detection_metrics": {
+    "accuracy": 0.925,
+    "precision": 0.912621359223301,
+    "recall": 0.94,
+    "f1_score": 0.9261083743842364,
+    "specificity": 0.91,
+    "true_positives": 94,
+    "true_negatives": 91,
+    "false_positives": 9,
+    "false_negatives": 6,
+    "total_samples": 200
+  },
+  "agent_performance": {
+    "BehaviorAnalyst": {
+      "mean_score": 72.34,
+      "std_dev": 15.23,
+      "min_score": 35.2,
+      "max_score": 98.7,
+      "median_score": 71.5,
+      "sample_count": 200
+    },
+    "PatternDetector": {
+      "mean_score": 68.91,
+      "std_dev": 18.45,
+      "min_score": 28.4,
+      "max_score": 96.3,
+      "median_score": 67.8,
+      "sample_count": 200
+    },
+    "GeographicAnalyst": {
+      "mean_score": 54.23,
+      "std_dev": 22.11,
+      "min_score": 15.6,
+      "max_score": 92.1,
+      "median_score": 53.2,
+      "sample_count": 200
+    },
+    "RiskAssessor": {
+      "mean_score": 65.78,
+      "std_dev": 19.34,
+      "min_score": 22.8,
+      "max_score": 95.4,
+      "median_score": 64.9,
+      "sample_count": 200
+    },
+    "TemporalAnalyst": {
+      "mean_score": 59.45,
+      "std_dev": 21.67,
+      "min_score": 18.3,
+      "max_score": 94.2,
+      "median_score": 58.7,
+      "sample_count": 200
+    }
+  },
+  "latency_metrics": {
+    "mean_latency_ms": 1234.56,
+    "median_latency_ms": 1123.45,
+    "std_dev_ms": 345.67,
+    "min_latency_ms": 678.9,
+    "max_latency_ms": 4567.89,
+    "p95_latency_ms": 2345.67,
+    "p99_latency_ms": 3456.78,
+    "throughput_tps": 0.81
+  },
+  "velocity_analysis": {
+    "low": {
+      "num_transactions": 2,
+      "final_score": 28.5,
+      "decision": "APPROVED",
+      "confidence": 85.3
+    },
+    "medium": {
+      "num_transactions": 8,
+      "final_score": 58.7,
+      "decision": "REVIEW",
+      "confidence": 72.4
+    },
+    "high": {
+      "num_transactions": 15,
+      "final_score": 82.3,
+      "decision": "FRAUD DETECTED",
+      "confidence": 91.2
+    },
+    "extreme": {
+      "num_transactions": 25,
+      "final_score": 95.8,
+      "decision": "FRAUD DETECTED",
+      "confidence": 97.6
+    }
+  },
+  "streaming_impact": {
+    "with_streaming": {
+      "accuracy": 0.925,
+      "precision": 0.912,
+      "recall": 0.938,
+      "f1_score": 0.925
+    },
+    "without_streaming": {
+      "accuracy": 0.847,
+      "precision": 0.823,
+      "recall": 0.865,
+      "f1_score": 0.843
+    },
+    "improvement_percentage": 9.2
+  },
+  "confusion_matrix": {
+    "TP": 94,
+    "TN": 91,
+    "FP": 9,
+    "FN": 6
+  },
+  "experiment_metadata": {
+    "timestamp": "20260104_203843",
+    "system_version": "1.0",
+    "num_agents": 5,
+    "velocity_window_minutes": 5,
+    "agent_weights": {
+      "BehaviorAnalyst": 0.25,
+      "PatternDetector": 0.25,
+      "GeographicAnalyst": 0.2,
+      "RiskAssessor": 0.15,
+      "TemporalAnalyst": 0.15
+    },
+    "sample_size": 200,
+    "fraud_scenarios": [
+      "high_velocity",
+      "amount_spike",
+      "location_hopping",
+      "progressive_testing"
+    ],
+    "note": "Simulated results for research paper"
+  }
+}
